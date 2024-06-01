@@ -9,6 +9,8 @@ use embassy_usb::control::{InResponse, Request, RequestType};
 use embassy_usb::driver::{Driver, Endpoint, EndpointIn, EndpointOut};
 use embassy_usb::Handler;
 
+/// Binary encoding of xbox 360 controller input (buttons/axis) state
+pub struct ControllerData(pub [u8; 12]);
 pub struct SerialNumberHandler(pub [u8; 7]);
 
 impl Handler for SerialNumberHandler {
@@ -29,7 +31,7 @@ impl Handler for SerialNumberHandler {
 
 #[derive(Default)]
 pub struct State {
-    xinput: Signal<CriticalSectionRawMutex, [u8; 12]>,
+    xinput: Signal<CriticalSectionRawMutex, ControllerData>,
     // right (weak) rumble in high byte
     // left (strong) rumble in low byte
     rumble: AtomicU16,
@@ -43,7 +45,7 @@ impl State {
         }
     }
 
-    pub fn send_xinput(&self, data: [u8; 12]) {
+    pub fn send_xinput(&self, data: ControllerData) {
         self.xinput.signal(data);
     }
 
@@ -235,7 +237,7 @@ impl<'d, D: Driver<'d>> XInput<'d, D> {
                     data[3] = 0xF0; // Unused
                     data[4] = 0x00; // Inner message type
                     data[5] = 0x13; // Inner message length
-                    data[6..18].copy_from_slice(&xinput_data);
+                    data[6..18].copy_from_slice(&xinput_data.0);
                     unwrap!(self.ep_in.write(&data).await);
                     idle_msg_deadline = Instant::now() + Duration::from_millis(11);
                 }
