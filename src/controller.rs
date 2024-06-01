@@ -53,8 +53,8 @@ impl From<XboxGamepad> for ControllerData {
             // bit 3 is unused
             | map_button(4, joy.btn_a)
             | map_button(5, joy.btn_b)
-            | map_button(6, joy.btn_y)
-            | map_button(7, joy.btn_x);
+            | map_button(6, joy.btn_x)
+            | map_button(7, joy.btn_y);
 
         [xinput_data[2]] = joy.trigger_left.to_le_bytes();
         [xinput_data[3]] = joy.trigger_right.to_le_bytes();
