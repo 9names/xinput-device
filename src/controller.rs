@@ -38,8 +38,7 @@ impl From<XboxGamepad> for ControllerData {
             }
         };
 
-        xinput_data[0] = 0u8
-            | map_button(0, joy.dpad_up)
+        xinput_data[0] = map_button(0, joy.dpad_up)
             | map_button(1, joy.dpad_down)
             | map_button(2, joy.dpad_left)
             | map_button(3, joy.dpad_right)
@@ -48,8 +47,7 @@ impl From<XboxGamepad> for ControllerData {
             | map_button(6, joy.btn_left_thumb)
             | map_button(7, joy.btn_right_thumb);
 
-        xinput_data[1] = 0u8
-            | map_button(0, joy.btn_left_shoulder)
+        xinput_data[1] = map_button(0, joy.btn_left_shoulder)
             | map_button(1, joy.btn_right_shoulder)
             | map_button(2, joy.btn_guide)
             // bit 3 is unused
@@ -66,6 +64,6 @@ impl From<XboxGamepad> for ControllerData {
         [xinput_data[8], xinput_data[9]] = joy.thumb_right_x.to_le_bytes();
         [xinput_data[10], xinput_data[11]] = joy.thumb_right_y.to_le_bytes();
 
-        Self { 0: xinput_data }
+        Self(xinput_data)
     }
 }
