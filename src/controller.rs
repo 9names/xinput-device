@@ -17,8 +17,8 @@ pub struct XboxGamepad {
     pub btn_b: bool,
     pub btn_x: bool,
     pub btn_y: bool,
-    pub trigger_left: u8,
-    pub trigger_right: u8,
+    pub trigger_left: i8,
+    pub trigger_right: i8,
     pub thumb_left_x: i16,
     pub thumb_left_y: i16,
     pub thumb_right_x: i16,
@@ -58,8 +58,8 @@ impl From<XboxGamepad> for ControllerData {
             | map_button(6, joy.btn_y)
             | map_button(7, joy.btn_x);
 
-        xinput_data[2] = joy.trigger_left;
-        xinput_data[3] = joy.trigger_right;
+        [xinput_data[2]] = joy.trigger_left.to_le_bytes();
+        [xinput_data[3]] = joy.trigger_right.to_le_bytes();
 
         [xinput_data[4], xinput_data[5]] = joy.thumb_left_x.to_le_bytes();
         [xinput_data[6], xinput_data[7]] = joy.thumb_left_y.to_le_bytes();
