@@ -1,6 +1,8 @@
 use core::sync::atomic::{AtomicU16, Ordering};
 
+#[cfg(feature = "defmt")]
 use defmt::{debug, info, unwrap, warn};
+
 use embassy_futures::select::{select3, Either3};
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::signal::Signal;
@@ -188,30 +190,44 @@ impl<'d, D: Driver<'d>> XInput<'d, D> {
         }
     }
 
+    // this is used by defmt logging
+    #[allow(dead_code)]
     fn ep_in_addr(&self) -> u8 {
         self.ep_in.info().addr.index() as u8
     }
 
+    // this is used by defmt logging
+    #[allow(dead_code)]
     fn ep_out_addr(&self) -> u8 {
         self.ep_out.info().addr.index() as u8
+    }
+
+    // TODO: better error handling instead of panicking
+    async fn ep_in_try_write(&mut self, data: &[u8]) {
+        #[cfg(feature = "defmt")]
+        unwrap!(self.ep_in.write(data).await);
+        #[cfg(not(feature = "defmt"))]
+        self.ep_in.write(data).await.unwrap()
     }
 
     async fn send_connection_status(&mut self, available: bool) {
         if available {
             self.controller_info_state = ControllerInfoState::Unknown1;
+            #[cfg(feature = "defmt")]
             debug!("{=u8}-> Controller connected", self.ep_in_addr());
-            unwrap!(self.ep_in.write(&[0x08, 0x80]).await);
+            self.ep_in_try_write(&[0x08, 0x80]).await;
         } else {
             self.controller_info_state = ControllerInfoState::Disconnected;
+            #[cfg(feature = "defmt")]
             debug!("{=u8}-> Controller disconnected", self.ep_out_addr());
-            unwrap!(self.ep_in.write(&[0x08, 0x00]).await);
+            self.ep_in_try_write(&[0x08, 0x08]).await;
         };
     }
 
     pub async fn run(mut self) -> ! {
         let mut out_data = [0_u8; 32];
 
-        // Use this deadline to send a n "idle" message when there was no change
+        // Use this deadline to send an "idle" message when there was no change
         // in pad data for more than 11ms. Only active after sending pad data.
         let mut idle_msg_deadline = Instant::MAX;
 
@@ -238,17 +254,20 @@ impl<'d, D: Driver<'d>> XInput<'d, D> {
                     data[4] = 0x00; // Inner message type
                     data[5] = 0x13; // Inner message length
                     data[6..18].copy_from_slice(&xinput_data.0);
-                    unwrap!(self.ep_in.write(&data).await);
+                    self.ep_in_try_write(&data).await;
                     idle_msg_deadline = Instant::now() + Duration::from_millis(11);
                 }
                 Either3::Second(_) => {
                     let mut data = [0_u8; 29];
                     data[3] = 0xF0;
-                    unwrap!(self.ep_in.write(&data).await);
+                    self.ep_in_try_write(&data).await;
                     idle_msg_deadline = Instant::MAX;
                 }
                 Either3::Third(n) => {
+                    #[cfg(feature = "defmt")]
                     let out_data = OutData::from_raw(&out_data[..unwrap!(n)]);
+                    #[cfg(not(feature = "defmt"))]
+                    let out_data = OutData::from_raw(&out_data[..n.unwrap()]);
                     self.handle_out_data(out_data).await;
                 }
             }
@@ -258,6 +277,7 @@ impl<'d, D: Driver<'d>> XInput<'d, D> {
     async fn handle_out_data(&mut self, out_data: OutData<'_>) -> bool {
         match out_data {
             OutData::ConnectionStatus => {
+                #[cfg(feature = "defmt")]
                 debug!("{=u8}<- Controller connected?", self.ep_out_addr());
                 self.send_connection_status(!matches!(
                     self.controller_info_state,
@@ -265,12 +285,17 @@ impl<'d, D: Driver<'d>> XInput<'d, D> {
                 ))
                 .await;
             }
-            OutData::Led(led) => debug!("{=u8}<- LED data {=u8}", self.ep_out_addr(), led),
+            OutData::Led(_led) => {
+                #[cfg(feature = "defmt")]
+                debug!("{=u8}<- LED data {=u8}", self.ep_out_addr(), _led);
+            }
             OutData::Ack => {
+                #[cfg(feature = "defmt")]
                 debug!("{=u8}<- ACK", self.ep_out_addr(),);
                 match self.controller_info_state {
                     ControllerInfoState::Disconnected | ControllerInfoState::None => {
-                        warn!("Unexpected ACK message from host.")
+                        #[cfg(feature = "defmt")]
+                        warn!("Unexpected ACK message from host.");
                     }
                     ControllerInfoState::Unknown1 => {
                         self.controller_info_state = ControllerInfoState::Unknown2;
@@ -288,9 +313,9 @@ impl<'d, D: Driver<'d>> XInput<'d, D> {
                             // The windows driver does not care about the remaining bytes.
                             0x20, 0x1D, 0x30, 0x03, 0x40, 0x01, 0x50, 0x01, 0xFF, 0xFF, 0xFF,
                         ];
-
+                        #[cfg(feature = "defmt")]
                         debug!("{=u8}-> {=[u8]:#X}", self.ep_in_addr(), controller_info);
-                        unwrap!(self.ep_in.write(&controller_info).await);
+                        self.ep_in_try_write(&controller_info).await;
                     }
                     ControllerInfoState::Unknown2 => {
                         self.controller_info_state = ControllerInfoState::None;
@@ -310,6 +335,7 @@ impl<'d, D: Driver<'d>> XInput<'d, D> {
                 }
             }
             OutData::Rumble(strong, weak) => {
+                #[cfg(feature = "defmt")]
                 debug!(
                     "{=u8}<- Rumble data strong={=u8:#X} weak={=u8:#X}",
                     self.ep_out_addr(),
@@ -319,11 +345,14 @@ impl<'d, D: Driver<'d>> XInput<'d, D> {
                 let rumble16 = u16::from_le_bytes([strong, weak]);
                 self.state.rumble.store(rumble16, Ordering::Relaxed);
             }
-            OutData::Unknown(data) => info!(
-                "{=u8}<- Unhandled out data: {=[u8]:X}",
-                self.ep_out_addr(),
-                data
-            ),
+            OutData::Unknown(_data) => {
+                #[cfg(feature = "defmt")]
+                info!(
+                    "{=u8}<- Unhandled out data: {=[u8]:X}",
+                    self.ep_out_addr(),
+                    _data
+                )
+            }
         }
 
         false
