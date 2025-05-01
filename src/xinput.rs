@@ -3,13 +3,13 @@ use core::sync::atomic::{AtomicU16, Ordering};
 #[cfg(feature = "defmt")]
 use defmt::{debug, info, unwrap, warn};
 
-use embassy_futures::select::{select3, Either3};
+use embassy_futures::select::{Either3, select3};
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::signal::Signal;
 use embassy_time::{Duration, Instant, Timer};
+use embassy_usb::Handler;
 use embassy_usb::control::{InResponse, Request, RequestType};
 use embassy_usb::driver::{Driver, Endpoint, EndpointIn, EndpointOut};
-use embassy_usb::Handler;
 
 /// Binary encoding of xbox 360 controller input (buttons/axis) state
 pub struct ControllerData(pub [u8; 12]);
