@@ -9,11 +9,11 @@ license = "MIT/Apache-2.0"
 defmt = ["dep:defmt"]
 
 [dependencies]
-defmt = { version = "0.3.6", optional = true }
+defmt = { version = "1.0.1", optional = true }
 embassy-futures = { version = "0.1.1", features = ["defmt"] }
-embassy-sync = { version = "0.5.0", features = ["defmt"] }
-embassy-time = { version = "0.3.0", features = ["defmt", "generic-queue-8"] }
-embassy-usb = { version = "0.1.0", features = [
+embassy-sync = { version = "0.6.2", features = ["defmt"] }
+embassy-time = { version = "0.4.0", features = ["defmt", "generic-queue-8"] }
+embassy-usb = { version = "0.4.0", features = [
     "defmt",
     "max-interface-count-8",
 ] }
