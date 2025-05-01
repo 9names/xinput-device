@@ -31,11 +31,7 @@ impl From<XboxGamepad> for ControllerData {
 
         // little helper closure for mapping button to bit offset
         let map_button = |to_bit, button: bool| {
-            if button {
-                1_u8 << to_bit
-            } else {
-                0
-            }
+            if button { 1_u8 << to_bit } else { 0 }
         };
 
         xinput_data[0] = map_button(0, joy.dpad_up)
