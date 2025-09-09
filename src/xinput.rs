@@ -110,9 +110,9 @@ impl<'d, D: Driver<'d>> XInput<'d, D> {
         let mut interface = function.interface();
         let mut alt = interface.alt_setting(CLASS_VENDOR, SUBCLASS_XINPUT, PROTOCOL_WIRELESS, None);
 
-        let ep_in = alt.endpoint_interrupt_in(32, 1);
+        let ep_in = alt.endpoint_interrupt_in(None, 32, 1);
         let ep_in_idx = 0x80 | ep_in.info().addr.index() as u8;
-        let ep_out = alt.endpoint_interrupt_out(32, 8);
+        let ep_out = alt.endpoint_interrupt_out(None, 32, 8);
         let ep_out_idx = ep_out.info().addr.index() as u8;
 
         // Unknown descriptor
@@ -160,9 +160,9 @@ impl<'d, D: Driver<'d>> XInput<'d, D> {
                 None,
             );
 
-            let ep_in = alt.endpoint_interrupt_in(32, 2);
+            let ep_in = alt.endpoint_interrupt_in(None, 32, 2);
             let ep_in_idx = 0x80 | ep_in.info().addr.index() as u8;
-            let ep_out = alt.endpoint_interrupt_out(32, 4);
+            let ep_out = alt.endpoint_interrupt_out(None, 32, 4);
             let ep_out_idx = ep_out.info().addr.index() as u8;
 
             alt.descriptor(
