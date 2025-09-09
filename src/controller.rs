@@ -2,6 +2,7 @@ use crate::xinput::ControllerData;
 
 /// xbox 360 controller inputs
 #[derive(Debug)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct XboxGamepad {
     pub dpad_up: bool,
     pub dpad_down: bool,
