@@ -245,6 +245,10 @@ impl<'d, D: Driver<'d>> XInput<'d, D> {
         let mut idle_msg_deadline = Instant::MAX;
 
         loop {
+            #[cfg(feature = "defmt")]
+            debug!("Waiting for connection");
+            self.ep_in.wait_enabled().await;
+            self.ep_out.wait_enabled().await;
             match select3(
                 self.state.xinput.wait(),
                 Timer::at(idle_msg_deadline),
