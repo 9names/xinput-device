@@ -202,12 +202,25 @@ impl<'d, D: Driver<'d>> XInput<'d, D> {
         self.ep_out.info().addr.index() as u8
     }
 
-    // TODO: better error handling instead of panicking
     async fn ep_in_try_write(&mut self, data: &[u8]) {
-        #[cfg(feature = "defmt")]
-        unwrap!(self.ep_in.write(data).await);
-        #[cfg(not(feature = "defmt"))]
-        self.ep_in.write(data).await.unwrap()
+        // Do not panic if the endpoint is not yet enabled/configured.
+        // In case of unplug/replug it will arrive again soon.
+        match self.ep_in.write(data).await {
+            Ok(()) => {
+                #[cfg(feature = "defmt")]
+                debug!(
+                    "{=u8}-> wrote {=usize} bytes",
+                    self.ep_in_addr(),
+                    data.len()
+                );
+            }
+            Err(e) => {
+                #[cfg(feature = "defmt")]
+                warn!("{=u8}-> write err: {=?}", self.ep_in_addr(), e);
+                // drop e, silence warning if defmt not used.
+                _ = e;
+            }
+        }
     }
 
     async fn send_connection_status(&mut self, available: bool) {
@@ -263,13 +276,22 @@ impl<'d, D: Driver<'d>> XInput<'d, D> {
                     self.ep_in_try_write(&data).await;
                     idle_msg_deadline = Instant::MAX;
                 }
-                Either3::Third(n) => {
-                    #[cfg(feature = "defmt")]
-                    let out_data = OutData::from_raw(&out_data[..unwrap!(n)]);
-                    #[cfg(not(feature = "defmt"))]
-                    let out_data = OutData::from_raw(&out_data[..n.unwrap()]);
-                    self.handle_out_data(out_data).await;
-                }
+                Either3::Third(n_res) => match n_res {
+                    Ok(n) => {
+                        #[cfg(feature = "defmt")]
+                        debug!("{=u8}<- read {=usize} bytes", self.ep_out_addr(), n);
+                        let out_data = OutData::from_raw(&out_data[..n]);
+                        self.handle_out_data(out_data).await;
+                    }
+                    Err(e) => {
+                        #[cfg(feature = "defmt")]
+                        warn!("{=u8}<- read err: {=?}", self.ep_out_addr(), e);
+                        Timer::after_millis(1).await;
+                        // drop e, silence warning if defmt not used.
+                        _ = e;
+                        continue;
+                    }
+                },
             }
         }
     }
