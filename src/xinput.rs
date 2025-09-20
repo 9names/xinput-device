@@ -1,7 +1,7 @@
 use core::sync::atomic::{AtomicU16, Ordering};
 
 #[cfg(feature = "defmt")]
-use defmt::{debug, info, unwrap, warn};
+use defmt::{debug, info, warn};
 
 use embassy_futures::select::{Either3, select3};
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;

@@ -13,3 +13,4 @@ jobs:
           target: thumbv6m-none-eabi
           components: clippy
       - run: cargo clippy
+      - run: cargo clippy --features defmt
