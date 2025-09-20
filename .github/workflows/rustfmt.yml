@@ -1,5 +1,8 @@
 on: [push, pull_request]
 name: Code formatting check
+defaults:
+  run:
+    working-directory: xinput-device
 jobs:
   fmt:
     name: Rustfmt

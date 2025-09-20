@@ -1,5 +1,8 @@
 on: [push, pull_request]
 name: Clippy check
+defaults:
+  run:
+    working-directory: xinput-device
 jobs:
   clippy_check:
     name: Run Clippy
