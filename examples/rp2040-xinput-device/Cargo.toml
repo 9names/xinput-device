@@ -1,0 +1,85 @@
+[package]
+edition = "2021"
+name = "xinput_device_rp2040"
+version = "0.1.0"
+license = "MIT OR Apache-2.0"
+resolver = "2"
+
+
+[dependencies]
+cortex-m = { version = "0.7", features = ["inline-asm"] }
+cortex-m-rt = "0.7"
+
+defmt = "1"
+defmt-rtt = "1"
+panic-probe = { version = "1", features = ["print-defmt"] }
+
+embassy-embedded-hal = { version = "0.5", features = ["defmt"] }
+embassy-executor = { version = "0.9", features = ["arch-cortex-m", "executor-thread", "executor-interrupt", "defmt"] }
+embassy-futures = { version = "0.1" }
+embassy-rp = { version = "0.8", features = ["defmt", "unstable-pac", "time-driver", "critical-section-impl", "rp2040"] }
+embassy-sync = { version = "0.7", features = ["defmt"] }
+embassy-time = { version = "0.5", features = ["defmt", "defmt-timestamp-uptime"] }
+embassy-usb = { version = "0.5.1", features = [ "defmt" ] }
+
+embedded-hal = { version = "1.0.0", features = ["defmt-03"] }
+embedded-hal-async = { version = "1.0.0", features = ["defmt-03"] }
+
+portable-atomic = { version = "1.5.1", features = ["critical-section"] }
+static_cell = "2.1.1"
+
+# if you're copying this example to use as a template, remove path and it should work from crates.io
+xinput-device = { path = "../../xinput-device", version = "0.1.0", features = ["defmt"] }
+
+# cargo build/run
+[profile.dev]
+codegen-units = 1
+debug = 2
+debug-assertions = true
+incremental = false
+opt-level = 1
+overflow-checks = true
+lto = "off"
+
+# cargo build/run --release
+[profile.release]
+codegen-units = 1
+debug = 2
+debug-assertions = false
+incremental = false
+lto = 'fat'
+opt-level = 's'
+overflow-checks = false
+
+# do not optimize proc-macro crates = faster builds from scratch
+[profile.dev.build-override]
+codegen-units = 8
+debug = false
+debug-assertions = false
+opt-level = 0
+overflow-checks = false
+
+[profile.release.build-override]
+codegen-units = 8
+debug = false
+debug-assertions = false
+opt-level = 0
+overflow-checks = false
+
+# cargo test
+[profile.test]
+codegen-units = 1
+debug = 2
+debug-assertions = true
+incremental = false
+opt-level = 's'
+overflow-checks = true
+
+# cargo test --release
+[profile.bench]
+codegen-units = 1
+debug = 2
+debug-assertions = false
+incremental = false
+lto = 'fat'
+opt-level = 's'

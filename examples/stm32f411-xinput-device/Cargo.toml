@@ -1,0 +1,47 @@
+[package]
+edition = "2024"
+name = "stm32f411-xinput-device"
+version = "0.1.0"
+authors = ["9names <60134748+9names@users.noreply.github.com>"]
+resolver = "2"
+
+[[bin]]
+name = "stm32f411-xinput-device"
+test = false
+bench = false
+
+[dependencies]
+cortex-m = { version = "0.7.7", features = ["critical-section-single-core"] }
+cortex-m-rt = "0.7.3"
+
+defmt = "1"
+defmt-rtt = "1"
+panic-probe = { version = "1", features = ["print-defmt"] }
+
+embedded-hal = "1.0.0"
+embedded-hal-async = "1.0.0"
+embedded-io = "0.6.1"
+embedded-io-async = "0.6.1"
+embedded-storage = "0.3.1"
+
+embassy-executor = { version = "0.9.1", features = ["arch-cortex-m", "executor-thread", "defmt", "executor-interrupt"] }
+embassy-futures = { version = "0.1.0", features = ["defmt"] }
+embassy-stm32 = { version = "0.4", features = ["defmt", "stm32f411re", "unstable-pac", "memory-x", "time-driver-any" ]  }
+embassy-sync = { version = "0.7.2" }
+embassy-time = { version = "0.5", features = ["defmt", "defmt-timestamp-uptime"] }
+embassy-usb = { version = "0.5.1", features = ["defmt"] }
+
+static_cell = "2.1.1"
+
+# if you're copying this example to use as a template, remove path and it should work from crates.io
+xinput-device = { path = "../../xinput-device", version = "0.1.0", features = ["defmt"] }
+
+[profile.release]
+debug = 2
+lto = true
+opt-level = 2
+
+[profile.dev]
+debug = 2
+lto = false
+opt-level = 2
