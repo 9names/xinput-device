@@ -1,0 +1,42 @@
+on: [push, pull_request]
+name: Check examples
+jobs:
+  build_and_test:
+    name: Build and test
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        toolchain:
+          - stable
+        working-directory:
+          - examples/nrf52840-xinput-device
+          - examples/rp2040-xinput-devicve
+          - examples/stm32f411-xinput-device
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup update ${{ matrix.toolchain }} && rustup default ${{ matrix.toolchain }}
+      - run: cargo build --verbose
+  fmt:
+    name: Rustfmt
+    runs-on: ubuntu-24.04
+    env:
+      RUSTFLAGS: "-D warnings"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          target: thumbv6m-none-eabi
+          components: rustfmt
+      - run: cargo fmt -- --check
+  clippy_check:
+    name: Run Clippy
+    runs-on: ubuntu-24.04
+    env:
+      RUSTFLAGS: "-D warnings"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          target: thumbv6m-none-eabi
+          components: clippy
+      - run: cargo clippy
