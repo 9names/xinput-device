@@ -4,6 +4,16 @@ jobs:
   fmt:
     name: Rustfmt
     runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        project:
+          - xinput-device
+          - examples/nrf52840-xinput-device
+          - examples/rp2040-xinput-device
+          - examples/stm32f411-xinput-device
+    defaults:
+      run:
+        working-directory: ${{ matrix.project }}
     env:
       RUSTFLAGS: "-D warnings"
     steps:

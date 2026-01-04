@@ -4,6 +4,25 @@ jobs:
   clippy_check:
     name: Run Clippy
     runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        project:
+          - xinput-device
+          - examples/nrf52840-xinput-device
+          - examples/rp2040-xinput-device
+          - examples/stm32f411-xinput-device
+        include:
+          - project: xinput-device
+            target: ""
+          - project: examples/nrf52840-xinput-device
+            target: thumbv7em-none-eabihf
+          - project: examples/rp2040-xinput-device
+            target: thumbv6m-none-eabi
+          - project: examples/stm32f411-xinput-device
+            target: thumbv7em-none-eabihf
+    defaults:
+      run:
+        working-directory: ${{ matrix.project }}
     env:
       RUSTFLAGS: "-D warnings"
     steps:
@@ -12,5 +31,12 @@ jobs:
         with:
           target: thumbv6m-none-eabi
           components: clippy
-      - run: cargo clippy
-      - run: cargo clippy --features defmt
+      - name: Add additional targets
+        run: |
+          rustup target add thumbv7em-none-eabihf
+      - name: Run Clippy on library
+        if: matrix.project == 'xinput-device'
+        run: cargo clippy
+      - name: Run Clippy on example
+        if: matrix.project != 'xinput-device'
+        run: cargo clippy --target ${{ matrix.target }}

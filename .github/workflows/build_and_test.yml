@@ -6,11 +6,38 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
+        project:
+          - xinput-device
+          - examples/nrf52840-xinput-device
+          - examples/rp2040-xinput-device
+          - examples/stm32f411-xinput-device
         toolchain:
           - stable
+        include:
+          - project: xinput-device
+            target: ""
+          - project: examples/nrf52840-xinput-device
+            target: thumbv7em-none-eabihf
+          - project: examples/rp2040-xinput-device
+            target: thumbv6m-none-eabi
+          - project: examples/stm32f411-xinput-device
+            target: thumbv7em-none-eabihf
+    defaults:
+      run:
+        working-directory: ${{ matrix.project }}
     steps:
       - uses: actions/checkout@v4
       - run: rustup update ${{ matrix.toolchain }} && rustup default ${{ matrix.toolchain }}
-      - run: cargo build --verbose
-      - run: cargo build --features defmt
-      - run: cargo test --verbose
+      - name: Add targets
+        run: |
+          rustup target add thumbv6m-none-eabi
+          rustup target add thumbv7em-none-eabihf
+      - name: Build library
+        if: matrix.project == 'xinput-device'
+        run: cargo build --verbose
+      - name: Build example
+        if: matrix.project != 'xinput-device'
+        run: cargo build --verbose --target ${{ matrix.target }}
+      - name: Run tests
+        if: matrix.project == 'xinput-device'
+        run: cargo test --verbose
