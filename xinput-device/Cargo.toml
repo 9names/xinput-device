@@ -2,8 +2,10 @@
 name = "xinput-device"
 version = "0.1.0"
 authors = ["Timo Kröger <timokroeger93@gmail.com>", "9names"]
+description = "USB XInput device driver for embassy-usb"
 edition = "2024"
 license = "MIT/Apache-2.0"
+repository = "https://github.com/9names/xinput-device"
 
 [features]
 defmt = ["dep:defmt"]
